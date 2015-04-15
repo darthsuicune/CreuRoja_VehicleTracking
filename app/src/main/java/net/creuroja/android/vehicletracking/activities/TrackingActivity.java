@@ -1,10 +1,8 @@
 package net.creuroja.android.vehicletracking.activities;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,46 +12,44 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import net.creuroja.android.vehicletracking.PositionUpdaterService;
 import net.creuroja.android.vehicletracking.R;
 import net.creuroja.android.vehicletracking.fragments.TrackingFragment;
 import net.creuroja.android.vehicletracking.model.Settings;
-import net.creuroja.android.vehicletracking.model.Vehicle;
+import net.creuroja.android.vehicletracking.model.vehicles.Vehicle;
 
 
 public class TrackingActivity extends ActionBarActivity
 		implements TrackingFragment.OnTrackingFragmentInteractionListener,
-		GooglePlayServicesClient.ConnectionCallbacks,
-		GooglePlayServicesClient.OnConnectionFailedListener {
+		GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 	private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 	private static final int REQUEST_LOGIN_ACTIVITY = 1;
 
-	private TrackingFragment mTrackingFragment;
-	private LocationClient mLocationClient;
-	private SharedPreferences prefs;
+	private TrackingFragment trackingFragment;
+	private GoogleApiClient apiClient;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		if (prefs.getString(Settings.ACCESS_TOKEN, null) == null) {
-			startLoginActivity();
+			requestLogin();
 		} else {
-			startTrackingActivity();
+			displayUi();
 		}
 	}
 
-	private void startLoginActivity() {
+	private void requestLogin() {
 		Intent intent = new Intent(this, LoginActivity.class);
 		startActivityForResult(intent, REQUEST_LOGIN_ACTIVITY);
 	}
 
-	private void startTrackingActivity() {
+	private void displayUi() {
 		setContentView(R.layout.activity_tracking);
 		setFragment();
 		parseNotifications();
@@ -62,20 +58,24 @@ public class TrackingActivity extends ActionBarActivity
 	}
 
 	private void setFragment() {
-		mTrackingFragment = (TrackingFragment) getSupportFragmentManager()
+		trackingFragment = (TrackingFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.tracking_fragment);
 	}
 
 	private void setUpLocationClient() {
-		mLocationClient = new LocationClient(this, this, this);
-		mLocationClient.connect();
+		apiClient = new GoogleApiClient.Builder(this)
+				.addConnectionCallbacks(this)
+				.addOnConnectionFailedListener(this)
+				.addApi(LocationServices.API)
+				.build();
+		apiClient.connect();
 		servicesConnected();
 	}
 
 	private void parseNotifications() {
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			OnNotificationReceivedListener listener = mTrackingFragment;
+			OnNotificationReceivedListener listener = trackingFragment;
 			if (extras.containsKey(PositionUpdaterService.KEY_PERMANENT_NOTIFICATION)) {
 				listener.onNotificationReceived(PositionUpdaterService.NOTIFICATION_PERMANENT);
 			} else if (extras.containsKey(PositionUpdaterService.KEY_FINISHED_NOTIFICATION)) {
@@ -103,7 +103,7 @@ public class TrackingActivity extends ActionBarActivity
 			case REQUEST_LOGIN_ACTIVITY:
 				switch (resultCode) {
 					case RESULT_OK:
-						startTrackingActivity();
+						displayUi();
 						break;
 					default:
 						finish();
@@ -116,7 +116,11 @@ public class TrackingActivity extends ActionBarActivity
 
 	@Override public void onTrackingStopRequested() {}
 
-		// Define a DialogFragment that displays the error dialog
+	@Override public void onConnectionFailed(ConnectionResult connectionResult) {
+
+	}
+
+	// Define a DialogFragment that displays the error dialog
 		public static class ErrorDialogFragment extends DialogFragment {
 			// Global field to contain the error dialog
 			private Dialog mDialog;
@@ -166,21 +170,8 @@ public class TrackingActivity extends ActionBarActivity
 		new LocationAvailabilityTask().execute();
 	}
 
-	@Override public void onDisconnected() {
-	}
+	@Override public void onConnectionSuspended(int i) {
 
-	@Override public void onConnectionFailed(ConnectionResult connectionResult) {
-		if (connectionResult.hasResolution()) {
-			try {
-				connectionResult
-						.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST);
-			} catch (IntentSender.SendIntentException e) {
-				e.printStackTrace();
-			}
-		} else {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			showErrorFragment(builder.create(), "CONNECTION FAILED");
-		}
 	}
 
 	private class LocationAvailabilityTask extends AsyncTask<Void, Void, Void> {
@@ -188,22 +179,22 @@ public class TrackingActivity extends ActionBarActivity
 		@Override protected Void doInBackground(Void... voids) {
 			runOnUiThread(new Runnable() {
 				@Override public void run() {
-					mTrackingFragment.showProgress(true);
+					trackingFragment.showProgress(true);
 				}
 			});
 
-			while (mLocationClient.getLastLocation() == null) {
+			while (LocationServices.FusedLocationApi.getLastLocation(apiClient) == null) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
-			mTrackingFragment.hasLocation = true;
-			if (mTrackingFragment.isConnected && !mTrackingFragment.inProgress) {
+			trackingFragment.hasLocation = true;
+			if (trackingFragment.isConnected && !trackingFragment.inProgress) {
 				runOnUiThread(new Runnable() {
 					@Override public void run() {
-						mTrackingFragment.showProgress(false);
+						trackingFragment.showProgress(false);
 					}
 				});
 			}
@@ -216,7 +207,7 @@ public class TrackingActivity extends ActionBarActivity
 		@Override protected Void doInBackground(Void... voids) {
 			runOnUiThread(new Runnable() {
 				@Override public void run() {
-					mTrackingFragment.showProgress(true);
+					trackingFragment.showProgress(true);
 				}
 			});
 
@@ -227,11 +218,11 @@ public class TrackingActivity extends ActionBarActivity
 					e.printStackTrace();
 				}
 			}
-			mTrackingFragment.isConnected = true;
-			if (mTrackingFragment.hasLocation && !mTrackingFragment.inProgress) {
+			trackingFragment.isConnected = true;
+			if (trackingFragment.hasLocation && !trackingFragment.inProgress) {
 				runOnUiThread(new Runnable() {
 					@Override public void run() {
-						mTrackingFragment.showProgress(false);
+						trackingFragment.showProgress(false);
 					}
 				});
 			}

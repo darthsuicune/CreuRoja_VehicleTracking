@@ -24,7 +24,7 @@ import net.creuroja.android.vehicletracking.R;
 import net.creuroja.android.vehicletracking.activities.OnNotificationReceivedListener;
 import net.creuroja.android.vehicletracking.fragments.loaders.VehicleLoader;
 import net.creuroja.android.vehicletracking.model.Settings;
-import net.creuroja.android.vehicletracking.model.Vehicle;
+import net.creuroja.android.vehicletracking.model.vehicles.Vehicle;
 
 import java.util.List;
 
@@ -50,9 +50,9 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 
 	private SharedPreferences prefs;
 
-	private Spinner mVehicleListSpinner;
-	private View mProgressView;
-	private View mMainView;
+	private Spinner vehicleListSpinner;
+	private View progressView;
+	private View mainView;
 
 	private PendingIntent pendingIntent;
 
@@ -80,9 +80,9 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 	 * >Communicating with Other Fragments</a> for more information.
 	 */
 	public interface OnTrackingFragmentInteractionListener {
-		public void onTrackingStartRequested(Vehicle vehicle);
+		void onTrackingStartRequested(Vehicle vehicle);
 
-		public void onTrackingStopRequested();
+		void onTrackingStopRequested();
 	}
 
 	@Override
@@ -119,9 +119,9 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 	}
 
 	private void prepareViews(View v) {
-		mVehicleListSpinner = (Spinner) v.findViewById(R.id.vehicle_list_spinner);
-		mProgressView = v.findViewById(R.id.progress);
-		mMainView = v.findViewById(R.id.main);
+		vehicleListSpinner = (Spinner) v.findViewById(R.id.vehicle_list_spinner);
+		progressView = v.findViewById(R.id.progress);
+		mainView = v.findViewById(R.id.main);
 		if (inProgress) {
 			showProgress(true);
 		}
@@ -142,7 +142,7 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 	}
 
 	private void startTracking() {
-		Vehicle vehicle = (Vehicle) mVehicleListSpinner.getSelectedItem();
+		Vehicle vehicle = (Vehicle) vehicleListSpinner.getSelectedItem();
 		startService(vehicle);
 		mListener.onTrackingStartRequested(vehicle);
 
@@ -162,7 +162,7 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 			manager.setRepeating(AlarmManager.RTC_WAKEUP, 0,
 					prefs.getLong(Settings.INTERVAL, Settings.DEFAULT_INTERVAL), pendingIntent);
 		} else {
-			createPendingIntent(null, run);
+			createPendingIntent(null, false);
 			manager.cancel(pendingIntent);
 		}
 	}
@@ -195,10 +195,10 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 	}
 
 	private void populateList(List<Vehicle> vehicles) {
-		mVehicleListSpinner.setAdapter(
+		vehicleListSpinner.setAdapter(
 				new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_dropdown_item,
 						vehicles));
-		mVehicleListSpinner.setSelection(
+		vehicleListSpinner.setSelection(
 				findVehicle(vehicles, prefs.getString(Settings.DEFAULT_VEHICLE, "")));
 	}
 
@@ -214,9 +214,9 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 	}
 
 	public void showProgress(boolean show) {
-		if (mProgressView != null) {
-			mProgressView.setVisibility((show) ? View.VISIBLE : View.GONE);
-			mMainView.setVisibility((show) ? View.GONE : View.VISIBLE);
+		if (progressView != null) {
+			progressView.setVisibility((show) ? View.VISIBLE : View.GONE);
+			mainView.setVisibility((show) ? View.GONE : View.VISIBLE);
 		}
 	}
 
