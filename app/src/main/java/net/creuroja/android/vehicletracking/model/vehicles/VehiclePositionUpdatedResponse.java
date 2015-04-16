@@ -8,6 +8,7 @@ import net.creuroja.android.vehicletracking.model.webservice.Response;
 public class VehiclePositionUpdatedResponse extends Response {
     String response;
     public VehiclePositionUpdatedResponse(String input) {
+        this.response = input;
     }
 
     @Override public boolean isValid() {
@@ -23,6 +24,6 @@ public class VehiclePositionUpdatedResponse extends Response {
     }
 
     @Override public int responseCode() {
-        return 200;
+        return 201;
     }
 }

@@ -1,6 +1,7 @@
 package net.creuroja.android.vehicletracking.model.vehicles;
 
 import net.creuroja.android.vehicletracking.model.webservice.Auth;
+import net.creuroja.android.vehicletracking.model.webservice.Response;
 import net.creuroja.android.vehicletracking.model.webservice.ServerData;
 import net.creuroja.android.vehicletracking.model.webservice.lib.RestWebServiceClient;
 import net.creuroja.android.vehicletracking.model.webservice.lib.WebServiceOption;
@@ -10,9 +11,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Vehicle {
 	public final String indicative;
@@ -35,12 +34,15 @@ public class Vehicle {
 		this.longitude = longitude;
 	}
 
-	public void upload(String accessToken) throws IOException {
+	// The server expects {vehicle_position: { vehicle_id: id, latitude: lat, longitude: lng } }
+	public void upload(String accessToken) throws IOException, JSONException {
 		RestWebServiceClient client = new RestWebServiceClient(new UpdatedLocationResponseFactory(),
 				ServerData.PROTOCOL, ServerData.SERVER_ADDRESS);
-		client.post(ServerData.RESOURCE_NEW_VEHICLE_POSITION + ".json",
-				headerOptions(accessToken), null, postOptions());
-
+		Response response = client.post(ServerData.RESOURCE_NEW_VEHICLE_POSITION + ".json",
+				headerOptions(accessToken), WebServiceOption.empty(), postOptions());
+		if(response.responseCode() != 201) {
+			throw new IOException(response.content());
+		}
 	}
 
 	private List<WebServiceOption> headerOptions(String accessToken) {
@@ -50,20 +52,18 @@ public class Vehicle {
 		return list;
 	}
 
-	private List<WebServiceOption> postOptions() {
+	private List<WebServiceOption> postOptions() throws JSONException {
 		List<WebServiceOption> list = new ArrayList<>();
 		list.add(new WebServiceOption(ServerData.ARG_VEHICLE_POSITION, asJson().toString()));
 		return list;
 	}
 
-	public JSONObject asJson() {
-		Map<String, Map<String, String>> holder = new HashMap<>();
-		Map<String, String> values = new HashMap<>();
+	public JSONObject asJson() throws JSONException {
+		JSONObject values = new JSONObject();
 		values.put(ServerData.ARG_VEHICLE_ID, Integer.toString(id));
 		values.put(ServerData.ARG_VEHICLE_LATITUDE, Double.toString(latitude));
 		values.put(ServerData.ARG_VEHICLE_LONGITUDE, Double.toString(longitude));
-		holder.put(ServerData.ARG_VEHICLE_POSITION, values);
-		return new JSONObject(holder);
+		return values;
 	}
 
 	public String toString() {

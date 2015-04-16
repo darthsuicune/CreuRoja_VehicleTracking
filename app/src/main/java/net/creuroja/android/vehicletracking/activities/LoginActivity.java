@@ -23,9 +23,12 @@ import net.creuroja.android.vehicletracking.R;
 import net.creuroja.android.vehicletracking.model.LoginResponseFactory;
 import net.creuroja.android.vehicletracking.model.Settings;
 import net.creuroja.android.vehicletracking.model.webservice.Auth;
+import net.creuroja.android.vehicletracking.model.webservice.Response;
 import net.creuroja.android.vehicletracking.model.webservice.ResponseFactory;
 import net.creuroja.android.vehicletracking.model.webservice.ServerData;
 import net.creuroja.android.vehicletracking.model.webservice.lib.RestWebServiceClient;
+
+import org.json.JSONException;
 
 import java.io.IOException;
 
@@ -193,34 +196,34 @@ public class LoginActivity extends ActionBarActivity {
     /**
      * Represents an asynchronous login/registration task used to authenticate the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    public class UserLoginTask extends AsyncTask<Void, Void, Void> {
         Auth auth;
+        Response response = null;
 
         UserLoginTask(Auth auth) {
             this.auth = auth;
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
-            String accessToken = null;
+        protected Void doInBackground(Void... params) {
             try {
-                 accessToken = auth.getToken();
-                if (accessToken != null) {
-                    prefs.edit().putString(Settings.ACCESS_TOKEN, accessToken).apply();
+                 response = auth.getToken();
+                if (response.isValid()) {
+                    prefs.edit().putString(Settings.ACCESS_TOKEN, response.content()).apply();
                 }
-            } catch (IOException e) {
+            } catch (IOException | JSONException e) {
                 onCancelled();
                 e.printStackTrace();
             }
-			return accessToken != null;
+			return null;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final Void aVoid) {
             authTask = null;
             showProgress(false);
 
-            if (success) {
+            if (response.isValid()) {
 				setResult(RESULT_OK);
                 finish();
             } else {

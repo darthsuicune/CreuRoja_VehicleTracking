@@ -25,7 +25,7 @@ local.properties
 .idea/libraries
 
 # Build directories
-VehicleTracking/build/
+vehicle_tracking/build/
 build/
 
 #Gradle folder

@@ -25,12 +25,15 @@ import net.creuroja.android.vehicletracking.activities.TrackingActivity;
 import net.creuroja.android.vehicletracking.model.Settings;
 import net.creuroja.android.vehicletracking.model.vehicles.Vehicle;
 
+import org.json.JSONException;
+
 import java.io.IOException;
 
-import static com.google.android.gms.common.api.GoogleApiClient.*;
+import static com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import static com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 
-public class PositionUpdaterService extends Service implements LocationListener,
-		ConnectionCallbacks, OnConnectionFailedListener {
+public class PositionUpdaterService extends Service
+		implements LocationListener, ConnectionCallbacks, OnConnectionFailedListener {
 	public static final String SERVICE_NAME = "PositionUpdaterService";
 
 	public static final String EXTRA_INDICATIVE =
@@ -57,11 +60,8 @@ public class PositionUpdaterService extends Service implements LocationListener,
 	@Override public void onCreate() {
 		super.onCreate();
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		apiClient = new GoogleApiClient.Builder(this)
-				.addConnectionCallbacks(this)
-				.addOnConnectionFailedListener(this)
-				.addApi(LocationServices.API)
-				.build();
+		apiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this)
+				.addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
 		apiClient.connect();
 	}
 
@@ -152,8 +152,7 @@ public class PositionUpdaterService extends Service implements LocationListener,
 		}
 	}
 
-	@Override
-	public IBinder onBind(Intent intent) {
+	@Override public IBinder onBind(Intent intent) {
 		return null;
 	}
 
@@ -176,7 +175,7 @@ public class PositionUpdaterService extends Service implements LocationListener,
 	}
 
 	@Override public void onLocationChanged(Location location) {
-		if(this.location != null && location.getAccuracy() < 10) {
+		if (this.location != null && location.getAccuracy() < 10) {
 			this.location = location;
 			Log.d("ASDF", "Better location registered");
 		}
@@ -192,11 +191,10 @@ public class PositionUpdaterService extends Service implements LocationListener,
 		@Override protected Void doInBackground(Void... voids) {
 			try {
 				vehicle.upload(token);
-			} catch (IOException e) {
+			} catch (IOException |JSONException e) {
 				Log.d(SERVICE_NAME, "Error connecting to server");
 				e.printStackTrace();
 			}
-
 			return null;
 		}
 	}

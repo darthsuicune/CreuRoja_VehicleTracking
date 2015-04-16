@@ -21,7 +21,7 @@ public abstract class ResponseFactory {
 
     protected Response readData(HttpURLConnection connection) throws IOException {
         InputStream result = connection.getInputStream();
-        if (connection.getResponseCode() == 200) {
+        if (connection.getResponseCode() < 300) {
             response = fillResponseData(asString(result));
         } else {
             response = new ErrorResponse(asString(connection.getErrorStream()),
