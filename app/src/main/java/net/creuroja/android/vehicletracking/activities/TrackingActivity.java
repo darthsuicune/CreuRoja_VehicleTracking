@@ -16,11 +16,11 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
-import net.creuroja.android.vehicletracking.PositionUpdaterService;
 import net.creuroja.android.vehicletracking.R;
 import net.creuroja.android.vehicletracking.fragments.TrackingFragment;
 import net.creuroja.android.vehicletracking.model.Settings;
 import net.creuroja.android.vehicletracking.model.vehicles.Vehicle;
+import net.creuroja.android.vehicletracking.services.NotificationDispatcher;
 
 
 public class TrackingActivity extends ActionBarActivity
@@ -76,10 +76,10 @@ public class TrackingActivity extends ActionBarActivity
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			OnNotificationReceivedListener listener = trackingFragment;
-			if (extras.containsKey(PositionUpdaterService.KEY_PERMANENT_NOTIFICATION)) {
-				listener.onNotificationReceived(PositionUpdaterService.NOTIFICATION_PERMANENT);
-			} else if (extras.containsKey(PositionUpdaterService.KEY_FINISHED_NOTIFICATION)) {
-				listener.onNotificationReceived(PositionUpdaterService.NOTIFICATION_FINISHED);
+			if (extras.containsKey(NotificationDispatcher.KEY_PERMANENT_NOTIFICATION)) {
+				listener.onNotificationReceived(NotificationDispatcher.NOTIFICATION_PERMANENT);
+			} else if (extras.containsKey(NotificationDispatcher.KEY_FINISHED_NOTIFICATION)) {
+				listener.onNotificationReceived(NotificationDispatcher.NOTIFICATION_FINISHED);
 			}
 		}
 	}

@@ -19,7 +19,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 
-import net.creuroja.android.vehicletracking.PositionUpdaterService;
+import net.creuroja.android.vehicletracking.services.NotificationDispatcher;
+import net.creuroja.android.vehicletracking.services.PositionUpdaterService;
 import net.creuroja.android.vehicletracking.R;
 import net.creuroja.android.vehicletracking.activities.OnNotificationReceivedListener;
 import net.creuroja.android.vehicletracking.fragments.loaders.VehicleLoader;
@@ -62,9 +63,9 @@ public class TrackingFragment extends Fragment implements OnNotificationReceived
 
 	@Override public void onNotificationReceived(int id) {
 		switch (id) {
-			case PositionUpdaterService.NOTIFICATION_FINISHED:
+			case NotificationDispatcher.NOTIFICATION_FINISHED:
 				break;
-			case PositionUpdaterService.NOTIFICATION_PERMANENT:
+			case NotificationDispatcher.NOTIFICATION_PERMANENT:
 				break;
 		}
 	}

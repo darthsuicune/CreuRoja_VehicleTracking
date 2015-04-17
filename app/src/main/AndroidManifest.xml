@@ -40,7 +40,7 @@
         </activity>
 
         <service
-            android:name=".PositionUpdaterService"
+            android:name=".services.PositionUpdaterService"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>

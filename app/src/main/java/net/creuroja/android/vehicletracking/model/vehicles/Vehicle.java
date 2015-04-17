@@ -48,7 +48,6 @@ public class Vehicle {
 	private List<WebServiceOption> headerOptions(String accessToken) {
 		List<WebServiceOption> list = new ArrayList<>();
 		list.add(Auth.getAuthOption(accessToken));
-		list.add(new WebServiceOption("Content-Type", "application/json"));
 		return list;
 	}
 
